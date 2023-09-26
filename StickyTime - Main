@@ -1,0 +1,160 @@
+/*This is a recreation of the "its not mine" system with some twists of my own. I have never seen that script and will just be reproducing some of the functionality with the mesh.
+
+If you can read this I decided to release the script full perm which means please do anything you wish with it or any part of it.
+
+Please leave it full perm tho so everyone can enjoy.
+
+-Matthew Stevenson
+*/
+//Basic Variables:
+key ownerKey;
+float cumVisibility = 0.3;
+//Planed features:
+
+    //define links by link name and count faces.
+    
+//default:  [0, Root , Leg_L, Leg_R, Crotch, Butt, Tummy, Arm_L, Arm_R, Back, Chest, Face]
+list Links = [];
+//Set by getLinkpointers
+list Faces = [];
+//default: to 0
+list currentCum = [];
+
+//Get link order based on link name, to search for link by link name later.
+getLinkpointers()
+{
+        integer i;
+        for(i=2; i<=llGetNumberOfPrims(); i++)
+        {
+            Links += llGetLinkName(i);
+            Faces += llGetLinkNumberOfSides(i);
+            currentCum += 0;
+        }
+        //Add unlinked/special locations...
+        Links += ["In_Mouth", "In_Pussy", "In_Ass"];
+        Faces += [1, 2, 2];
+        currentCum += [0,0,0];
+        llOwnerSay(llDumpList2String(Links, ", "));
+}
+// Set all faces hide/show based on current cum
+updateAllFaces()
+{
+    integer i;
+    for(i=0; i<llGetListLength(Links); i++)
+    {
+        integer f = 0;
+        while(f <= llList2Integer(currentCum,i) )
+        {
+            //add Skip in_mouth face unless cum is in mouth...
+            if(f< llList2Integer(currentCum,i))llSetLinkAlpha(i+2,cumVisibility, f);
+            f++;
+        }
+    }
+}
+    //RLV do not detach once any cum is present
+    
+    //track cum loads warn, and donators to notecard.
+
+    //Cum swaping and licking up VIA hud
+    
+    //Smearing of cum with hands or if bump is on via bumping
+    
+    //Clean up via licking, showers, SL water, and Rags
+    
+    //Integration with fertility via a mod
+    
+    //dialog menus for those not using the hud
+string currentStatus = "";
+updateStatus()
+{
+    currentStatus = "
+
+Targets:
+    Face: "+(string) (llList2Integer(currentCum,llListFindList(Links, "Face")))+"/"+(string) (llList2Integer(Faces,llListFindList(Links, "Face"))-1)+"
+    Chest: "+(string) (llList2Integer(currentCum,llListFindList(Links, "Chest")))+"/"+(string) (llList2Integer(Faces,llListFindList(Links, "Chest")))+"
+    Back: "+(string) (llList2Integer(currentCum,llListFindList(Links, "Back")))+"/"+(string) (llList2Integer(Faces,llListFindList(Links, "Back")))+"
+    Arms: "+(string) (llList2Integer(currentCum,llListFindList(Links, "Arm_L")))+"/"+(string) (llList2Integer(Faces,llListFindList(Links, "Arm_L")))+"
+    Tummy: "+(string) (llList2Integer(currentCum,llListFindList(Links, "Tummy")))+"/"+(string) (llList2Integer(Faces,llListFindList(Links, "Tummy")))+"
+    Crotch: "+(string) (llList2Integer(currentCum,llListFindList(Links, "Crotch")))+"/"+(string) (llList2Integer(Faces,llListFindList(Links, "Crotch")))+"
+    Butt: "+(string) (llList2Integer(currentCum,llListFindList(Links, "Butt")))+"/"+(string) (llList2Integer(Faces,llListFindList(Links, "Butt")))+"
+    Legs: "+(string) (llList2Integer(currentCum,llListFindList(Links, "Leg_L")))+"/"+(string) (llList2Integer(Faces,llListFindList(Links, "Leg_L")))+"
+    In Mouth: "+(string) (llList2Integer(currentCum,llListFindList(Links, "In_Mouth")))+"/"+(string) (llList2Integer(Faces,llListFindList(Links, "In_Mouth")))+"
+    In Pussy: "+(string) (llList2Integer(currentCum,llListFindList(Links, "In_Pussy")))+"/"+(string) (llList2Integer(Faces,llListFindList(Links, "In_Pussy")))+"
+    In ass: "+(string) (llList2Integer(currentCum,llListFindList(Links, "In_Ass")))+"/"+(string) (llList2Integer(Faces,llListFindList(Links, "In_Ass")))+"
+    
+You're about to cum alot!";
+
+} 
+giveMenu(key id)
+{
+    updateStatus();
+    llDialog(id,"Where would you like to cum?"+currentStatus, [
+"Legs", "Crotch","Butt",
+"Tummy", "Arms", "Back",
+"Chest", "Face", "In Mouth", 
+"In Pussy", "In Ass"], -1);
+}
+
+default
+{
+    state_entry()
+    {
+        //set up "new owners" listen
+        llListen(0,"","","");
+        llListen(-1,"","","");
+        //set up new notecard
+        // set up lists of links and numoffaces
+        getLinkpointers();
+        // hide all
+        integer i=0;
+        while(i<llGetNumberOfPrims())
+        {
+            i++;
+            llSetLinkAlpha(i,0,ALL_SIDES);
+        }
+        //Testing
+        llSetTimerEvent(10);
+    }
+    attach(key id)
+    {
+        //is worn? allow running
+    }
+    on_rez(integer t)
+    {
+        //New owner? delete notecard, new setup
+        //check for RLV
+        //check for hud
+        //check for fertility
+    }
+    listen(integer c, string n, key id, string m)
+    {
+        if(llToLower(m) == "cum")
+        {
+            giveMenu(id);
+            return;
+        }
+        //Test = Increase one load on location m
+        integer ListFind = llListFindList(Links,m);
+        if( ListFind != -1)
+        {
+            //ListFind += 2;
+            integer currCumCount = llList2Integer(currentCum,ListFind);
+            currCumCount++;
+            currentCum = llListReplaceList(currentCum,currCumCount,ListFind,ListFind);
+            updateAllFaces();
+            
+            giveMenu(id);
+            return;
+        }
+        else
+        {
+            //in mouth, in pussy, in ass
+        }
+        //listen for ping
+        //if force false ask if ok
+        //show location targeted and by whom. if force true allow struggle.
+        //listen for pew pew and show link and number of faces use list for multi target pew pew "cum alot"
+        //listen for clean up - Licking, wiping, shower, cloth, lake
+        //share/request slut card.
+    }
+}
